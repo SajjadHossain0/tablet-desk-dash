@@ -229,11 +229,22 @@
             color: #00ffff;
         }
 
-        .shortcut a {
-            text-decoration: none;
-            color: #a0faff;
-            font-size: 14px;
-        }
+        .shortcut a{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-decoration:none;
+    color:#a0faff;
+}
+        .shortcut-name{
+    font-size:11px;
+    margin-top:4px;
+    text-align:center;
+    max-width:60px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
 
         .shortcut button {
             position: absolute;
