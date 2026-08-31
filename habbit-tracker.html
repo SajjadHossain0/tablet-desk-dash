@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Being New Version of Me - Tracker</title>
+  <style>
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --primary: #4a90e2;
+      --text: #333333;
+      --border: #e0e0e0;
+      --success: #2ecc71;
+      --mood-color: #e67e22;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1250px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header-section {
+      display: grid;
+      grid-template-columns: 2fr 1fr 2fr;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .input-group label {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #666;
+    }
+
+    .input-group input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .custom-input {
+      flex-grow: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .reset-btn {
+      background-color: var(--warning);
+      color: #fff;
+    }
+
+    .table-wrapper {
+      position: relative;
+      overflow-x: auto;
+      margin-bottom: 35px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1050px;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 13px;
+    }
+
+    th {
+      background-color: #f8f9fa;
+    }
+
+    th.name-header, td.item-name {
+      text-align: left;
+      padding-left: 10px;
+      width: 180px;
+    }
+
+    .day-cell {
+      cursor: pointer;
+      user-select: none;
+      width: 25px;
+      height: 32px;
+      position: relative;
+    }
+
+    .habit-cell.checked {
+      background-color: var(--success);
+      color: white;
+      font-weight: bold;
+    }
+
+    .mood-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: var(--mood-color);
+      border-radius: 50%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .delete-btn {
+      background: var(--danger);
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    /* Canvas overlay */
+    #graphCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: #fff;
+      padding: 20px 25px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+
+    .modal-box h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .modal-box p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn-cancel {
+      background-color: #95a5a6;
+    }
+
+    .btn-confirm {
+      background-color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Action Header -->
+  <div class="header-top">
+    <h2 style="font-size: 20px; color: #333;">Tracker Dashboard</h2>
+    <button class="reset-btn" onclick="promptResetMonth()">Reset Month Data</button>
+  </div>
+
+  <!-- Header Info -->
+  <div class="header-section">
+    <div class="input-group">
+      <label>Title</label>
+      <input type="text" id="appTitle" value="Being New Version of Me">
+    </div>
+    <div class="input-group">
+      <label>Date</label>
+      <input type="date" id="appDate">
+    </div>
+    <div class="input-group">
+      <label>Goal</label>
+      <input type="text" id="appGoal" placeholder="Enter your goal...">
+    </div>
+  </div>
+
+  <!-- Habit Tracker Section -->
+  <div class="section-title">Habit / Routine Tracker</div>
+  <div class="action-bar">
+    <input type="text" id="newHabitInput" class="custom-input" placeholder="New Habit name...">
+    <button onclick="addHabit()">Add Habit</button>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr id="habitHeader">
+          <th class="name-header">Habit / Routine</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="habitBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Mood Tracker Section -->
+  <div class="section-title">Mood Tracker & Graph</div>
+  <div class="action-bar">
+    <input type="text" id="newMoodInput" class="custom-input" placeholder="New Mood label (e.g., Happy, Stressed)...">
+    <button onclick="addMood()" style="background-color: var(--mood-color);">Add Mood</button>
+  </div>
+  <div class="table-wrapper" id="moodWrapper">
+    <canvas id="graphCanvas"></canvas>
+    <table id="moodTable">
+      <thead>
+        <tr id="moodHeader">
+          <th class="name-header">Mood Level</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="moodBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <h3 id="modalTitle">Are you sure?</h3>
+    <p id="modalMessage">Do you really want to delete this?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" id="confirmActionBtn">Yes, Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let data = JSON.parse(localStorage.getItem('appTrackerData')) || {
+    title: "Being New Version of Me",
+    date: "",
+    goal: "",
+    habits: [],
+    moods: []
+  };
+
+  // Target item details for modals
+  let actionTarget = { type: null, index: null };
+
+  const titleInput = document.getElementById('appTitle');
+  const dateInput = document.getElementById('appDate');
+  const goalInput = document.getElementById('appGoal');
+  const modal = document.getElementById('confirmModal');
+  const confirmActionBtn = document.getElementById('confirmActionBtn');
+
+  function init() {
+    titleInput.value = data.title || "";
+    dateInput.value = data.date || "";
+    goalInput.value = data.goal || "";
+
+    setupHeaders();
+    renderHabits();
+    renderMoods();
+
+    titleInput.addEventListener('input', saveData);
+    dateInput.addEventListener('change', saveData);
+    goalInput.addEventListener('input', saveData);
+
+    window.addEventListener('resize', drawGraph);
+  }
+
+  function setupHeaders() {
+    const hHeader = document.getElementById('habitHeader');
+    const mHeader = document.getElementById('moodHeader');
+    
+    for (let i = 1; i <= 31; i++) {
+      const th1 = document.createElement('th');
+      th1.textContent = i;
+      hHeader.insertBefore(th1, hHeader.children[i]);
+
+      const th2 = document.createElement('th');
+      th2.textContent = i;
+      mHeader.insertBefore(th2, mHeader.children[i]);
+    }
+  }
+
+  // --- HABIT METHODS ---
+  function renderHabits() {
+    const tbody = document.getElementById('habitBody');
+    tbody.innerHTML = '';
+    data.habits.forEach((habit, hIdx) => {
+      const tr = document.createElement('tr');
+      
+      const tdName = document.createElement('td');
+      tdName.className = 'item-name';
+      tdName.textContent = habit.name;
+      tr.appendChild(tdName);
+
+      let count = 0;
+      for (let i = 0; i < 31; i++) {
+        const td = document.createElement('td');
+        td.className = 'day-cell habit-cell' + (habit.days[i] ? ' checked' : '');
+        td.textContent = habit.days[i] ? '✓' : '';
+        td.onclick = () => {
+          data.habits[hIdx].days[i] = !data.habits[hIdx].days[i];
+          saveData();
+          renderHabits();
+        };
+        tr.appendChild(td);
+        if (habit.days[i]) count++;
+      }
+
+      const tdTotal = document.createElement('td');
+      tdTotal.textContent = count;
+      tr.appendChild(tdTotal);
+
+      const tdAct = document.createElement('td');
+      tdAct.innerHTML = `<button class="delete-btn" onclick="promptDelete('habit', ${hIdx}, '${escapeHtml(habit.name)}')">X</button>`;
+      tr.appendChild(tdAct);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function addHabit() {
+    const input = document.getElementById('newHabitInput');
+    if (!input.value.trim()) return;
+    data.habits.push({ name: input.value.trim(), days: new Array(31).fill(false) });
+    input.value = '';
+    saveData();
+    renderHabits();
+  }
+
+  // --- MOOD METHODS ---
+  function renderMoods() {
+    const tbody = document.getElementById('moodBody');
+    tbody.innerHTML = '';
+    data.moods.forEach((mood, mIdx) => {
+      const tr = document.createElement('tr');
+
+      const tdName = document.createElement('td');
+      tdName.className = 'item-name';
+      tdName.textContent = mood.name;
+      tr.appendChild(tdName);
+
+      let count = 0;
+      for (let i = 0; i < 31; i++) {
+        const td = document.createElement('td');
+        td.className = 'day-cell mood-cell';
+        td.dataset.day = i;
+        td.dataset.row = mIdx;
+        
+        if (mood.days[i]) {
+          const dot = document.createElement('span');
+          dot.className = 'mood-dot';
+          td.appendChild(dot);
+          count++;
+        }
+
+        td.onclick = () => {
+          data.moods[mIdx].days[i] = !data.moods[mIdx].days[i];
+          saveData();
+          renderMoods();
+        };
+        tr.appendChild(td);
+      }
+
+      const tdTotal = document.createElement('td');
+      tdTotal.textContent = count;
+      tr.appendChild(tdTotal);
+
+      const tdAct = document.createElement('td');
+      tdAct.innerHTML = `<button class="delete-btn" onclick="promptDelete('mood', ${mIdx}, '${escapeHtml(mood.name)}')">X</button>`;
+      tr.appendChild(tdAct);
+
+      tbody.appendChild(tr);
+    });
+
+    setTimeout(drawGraph, 50);
+  }
+
+  function addMood() {
+    const input = document.getElementById('newMoodInput');
+    if (!input.value.trim()) return;
+    data.moods.push({ name: input.value.trim(), days: new Array(31).fill(false) });
+    input.value = '';
+    saveData();
+    renderMoods();
+  }
+
+  // --- MODAL ACTIONS & RESET LOGIC ---
+  function promptDelete(type, index, itemName) {
+    actionTarget = { type, index };
+    document.getElementById('modalTitle').textContent = "Delete Row?";
+    document.getElementById('modalMessage').textContent = `Are you sure you want to delete "${itemName}"?`;
+    confirmActionBtn.style.backgroundColor = "var(--danger)";
+    confirmActionBtn.textContent = "Yes, Delete";
+    modal.classList.add('active');
+  }
+
+  function promptResetMonth() {
+    actionTarget = { type: 'reset', index: null };
+    document.getElementById('modalTitle').textContent = "Reset Month Tracker?";
+    document.getElementById('modalMessage').textContent = "This will clear all checked marks (1-31), mood dots, and dates for the new month. Your habit names will remain saved.";
+    confirmActionBtn.style.backgroundColor = "var(--warning)";
+    confirmActionBtn.textContent = "Yes, Reset Month";
+    modal.classList.add('active');
+  }
+
+  function closeModal() {
+    modal.classList.remove('active');
+    actionTarget = { type: null, index: null };
+  }
+
+  confirmActionBtn.onclick = () => {
+    if (actionTarget.type === 'habit') {
+      data.habits.splice(actionTarget.index, 1);
+    } else if (actionTarget.type === 'mood') {
+      data.moods.splice(actionTarget.index, 1);
+    } else if (actionTarget.type === 'reset') {
+      // Clear all days for habits
+      data.habits.forEach(h => h.days = new Array(31).fill(false));
+      // Clear all days for moods
+      data.moods.forEach(m => m.days = new Array(31).fill(false));
+      // Reset Date & Goal for the new month
+      data.date = "";
+      data.goal = "";
+      dateInput.value = "";
+      goalInput.value = "";
+    }
+
+    saveData();
+    renderHabits();
+    renderMoods();
+    closeModal();
+  };
+
+  function escapeHtml(str) {
+    return str.replace(/'/g, "\\'");
+  }
+
+  // --- GRAPH DRAWING ---
+  function drawGraph() {
+    const canvas = document.getElementById('graphCanvas');
+    const table = document.getElementById('moodTable');
+    const wrapper = document.getElementById('moodWrapper');
+    
+    canvas.width = table.offsetWidth;
+    canvas.height = table.offsetHeight;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const points = [];
+
+    for (let day = 0; day < 31; day++) {
+      for (let row = 0; row < data.moods.length; row++) {
+        if (data.moods[row].days[day]) {
+          const cell = table.querySelector(`.mood-cell[data-day="${day}"][data-row="${row}"]`);
+          if (cell) {
+            const rect = cell.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const x = rect.left - wrapperRect.left + (rect.width / 2);
+            const y = rect.top - wrapperRect.top + (rect.height / 2);
+            points.push({ x, y });
+          }
+        }
+      }
+    }
+
+    if (points.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.strokeStyle = '#e67e22';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  function saveData() {
+    data.title = titleInput.value;
+    data.date = dateInput.value;
+    data.goal = goalInput.value;
+    localStorage.setItem('appTrackerData', JSON.stringify(data));
+  }
+
+  init();
+</script>
+
+</body>
+</html>
